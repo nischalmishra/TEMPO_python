@@ -7,7 +7,6 @@ Created on Wed Jul 19 10:38:50 2017
 # This script uses the PRNU map derived from integration time sweep data to some
 # of the images acquired during intesnity sweep.
 
-from random import randint
 import os
 import numpy as np
 from numpy import genfromtxt
@@ -23,7 +22,6 @@ def get_size(filename):
     """
     fileinfo = os.stat(filename)
     return fileinfo
-
 
 def get_oultier_mask():
     file_path = r'C:\Users\nmishra\Workspace\TEMPO\outlier_mask'
