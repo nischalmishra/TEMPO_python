@@ -22,6 +22,28 @@ def read_outlier_mask():
     return outlier_mask_final
 
 
+def calculate_dark_current(image, i):
+    """ Calculate the dark current based off the dark data
+    It takes the filename of Light data and searches for the mathing integration
+    time   in the dark data directory, find the required dark data, subtracts off 
+    the offset and computes the dark current
+    """
+    dark_data_dir = r'F:\TEMPO\Data\GroundTest\FPS\Integration_Sweep\Dark'
+    data_path_name_split = image.split('_')  
+    all_int_files = [each for each in os.listdir(dark_data_dir) \
+                         if each.endswith(data_path_name_split[-1])]   
+    
+    print(all_int_files)
+    dark_data_file = os.path.join(dark_data_dir, all_int_files[0])
+    IDL_variable = readsav(dark_data_file)            
+    all_full_frame = IDL_variable.q 
+    quad = all_full_frame[:, i, :, :]
+    active_quad = np.mean(quad[:, 4:1028, 10:1034], axis=0)               
+    tsoc = np.mean(quad[:, 4:1028, 1034:1056], axis=0)
+    bias_subtracted_quad = perform_bias_subtraction(active_quad, tsoc)
+    return bias_subtracted_quad
+    
+
 
 def get_size(filename):
     """
@@ -109,6 +131,7 @@ def main():
     dframe1 = pd.DataFrame()    
     outlier_mask = read_outlier_mask()
     file_path = r'F:\TEMPO\Data\GroundTest\FPS\Integration_Sweep\Light\Saved_quads'
+    
     all_int_files = [each for each in os.listdir(file_path) \
                          if each.endswith('.dat.sav')]
     if 'Integration_Sweep' in file_path:
@@ -128,11 +151,7 @@ def main():
             
             data_path_name_split = data_files.split('_')  
             print(data_files)
-            #integration_type = [x for x in names_to_check if x in data_path_name_split]
-            #collection_type = integration_type[0]
-            #frames_int = data_path_name_split[-1]            
-            #for integ_sweep  
-           
+            dark_current = 1          
             if 'Intensity_Sweep' in file_path:
                  int_time = data_path_name_split[0]
             else:
@@ -149,7 +168,10 @@ def main():
                 active_quad = np.mean(quad[:, 4:1028, 10:1034], axis=0)               
                 tsoc = np.mean(quad[:, 4:1028, 1034:1056], axis=0)
                 bias_subtracted_quad = perform_bias_subtraction(active_quad, tsoc)
-                #bias_subtracted_quad = active_quad              
+                if dark_current:             
+                    dark_current = calculate_dark_current(data_files, i)
+                    bias_subtracted_quad = bias_subtracted_quad- dark_current
+                
                 bias_subtracted_quad_even = bias_subtracted_quad[:, ::2]
                 bias_subtracted_quad_odd = bias_subtracted_quad[:, 1::2]
                 if i == 0: 
@@ -157,7 +179,6 @@ def main():
                     all_med_quad_A_odd.append(np.mean(filter_outlier_median(bias_subtracted_quad_odd)))
                     all_std_quad_A_even.append(np.var(filter_outlier_median(bias_subtracted_quad_even)))
                     all_std_quad_A_odd.append(np.var(filter_outlier_median(bias_subtracted_quad_odd)))
-                
                 elif i == 1: 
                     all_med_quad_B_even.append(np.mean(filter_outlier_median(bias_subtracted_quad_even)))
                     all_med_quad_B_odd.append(np.mean(filter_outlier_median(bias_subtracted_quad_odd)))              
