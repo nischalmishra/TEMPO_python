@@ -358,22 +358,22 @@ def create_striping_metric_plot(striping_metric_all_rows, striping_metric_all_co
       ncols=1
       fig, axrr = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 10))
       axrr[0].plot(100*np.abs(np.array(striping_metric_all_rows)), '.', label=label[0])
-      axrr[0].set_xlabel('Spatial Pixels',fontsize=14, fontweight="bold" )
-      axrr[0].set_ylabel('Spatial Striping Metric (%)',fontsize=14, fontweight="bold" )
+      axrr[0].set_xlabel('Pixels Indices (#)',fontsize=14, fontweight="bold" )
+      axrr[0].set_ylabel('Spectral Striping Metric (%)',fontsize=14, fontweight="bold" )
       axrr[0].set_title(title, fontsize=14,fontweight="bold")
       axrr[0].set_xlim(0, 1050)
       axrr[0].set_ylim(0, 14)     
       axrr[0].grid(True, linestyle=':')
       
       axrr[1].plot(100*np.abs(np.array(striping_metric_all_cols)), '.', label=label[1])
-      axrr[1].set_xlabel('Spectral Pixels',fontsize=14, fontweight="bold" )
-      axrr[1].set_ylabel('Spectral Striping Metric (%)',fontsize=14, fontweight="bold" )
+      axrr[1].set_xlabel('Pixels Indices (#)',fontsize=14, fontweight="bold" )
+      axrr[1].set_ylabel('Spatial Striping Metric (%)',fontsize=14, fontweight="bold" )
       axrr[1].grid(True, linestyle=':')
       axrr[1].set_ylim(0, 14)
       axrr[1].set_xlim(0, 1050)     
       axrr[1].grid(True, linestyle=':')
-      #plt.show()
-      #cc
+#      plt.show()
+#      cc
       fig.savefig(figure_name, dpi=100, bbox_inches="tight")
   
 
