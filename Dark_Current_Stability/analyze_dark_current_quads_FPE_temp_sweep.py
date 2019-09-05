@@ -11,7 +11,7 @@ import pandas as pd
 #from scipy.io.idl import readsav
 import matplotlib.pyplot as plt
 from scipy.io.idl import readsav
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+#from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def perform_bias_subtraction(active_quad, trailing_overclocks):
