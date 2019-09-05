@@ -2,7 +2,7 @@
 """
 Created on Wed Sep 20 09:26:29 2017
 
-@author: nmishra
+@author: nmishra function to plot uncertainties and add it to git.
 """
 
 import numpy as np
