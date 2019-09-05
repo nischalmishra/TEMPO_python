@@ -130,7 +130,7 @@ def calculate_dark_current(image, i, int_time):
     active_quad = np.mean(quad[:, 4:1028, 10:1034], axis=0)               
     tsoc = np.mean(quad[:, 4:1028, 1034:1056], axis=0)
     bias_subtracted_quad = perform_bias_subtraction_ave(active_quad, tsoc)
-    smear_subtracted_quad, smear_signal = perform_smear_subtraction(bias_subtracted_quad[15:990, :], int_time)
+    smear_subtracted_quad, smear_signal = perform_smear_subtraction(bias_subtracted_quad[10:1000, :], int_time)
     return smear_subtracted_quad
 
 
@@ -477,7 +477,7 @@ def main():
             create_image(quad_A[4:1028, 10:1034], title='check', figure_name='check')                             
             active_quad_A = perform_bias_subtraction_ave(quad_A[4:1028, 10:1034], tsoc_A)
              # removed the vignetted zones and perform linearity
-            linearized_quad_A = perform_linearity(active_quad_A[15:990, :], quads[i]) 
+            linearized_quad_A = perform_linearity(active_quad_A[10:1000, :], quads[i]) 
             print(linearized_quad_A.shape)
             
             active_quad_A, smear_signal = perform_smear_subtraction(linearized_quad_A, int_time)

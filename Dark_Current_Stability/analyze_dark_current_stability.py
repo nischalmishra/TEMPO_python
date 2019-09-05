@@ -159,7 +159,8 @@ def main():
     #nlat = nx_quad*2
     #nspec = ny_quad*2
     file_path = r'F:\TEMPO\Data\GroundTest\FPS\FPA_Gain_vs_Temp'
-    save_file_path = r'C:\Users\nmishra\Workspace\TEMPO\FPA_Dark_Current_Stability'    
+    save_file_path_image = r'C:\Users\nmishra\Workspace\TEMPO\Storage_region_analysis\Image_Sto_Comparisons\Image'    
+    save_file_path_sto = r'C:\Users\nmishra\Workspace\TEMPO\Storage_region_analysis\Image_Sto_Comparisons\Storage
     temp_files = os.listdir(file_path) 
     
    

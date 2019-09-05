@@ -4,20 +4,22 @@ Created on Fri Mar 31 10:58:23 2017
 
 @author: nmishra
 """
-import os
+#import os
 import random
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
+from matplotlib.ticker import  FormatStrFormatter
 #from scipy import stats as sc
 import seaborn as sns
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 #import matplotlib.mlab as mlab
-from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+
 
 #******************************************************************************
 
 def plot_full_frame_image(full_frame, image_title, collection_type, frames,
-                              int_time, plot_dir):
+                          int_time, plot_dir):
     """
     Function to make a plot frame image including the overclock pixels.
     The purpose is to check if the quads are alligned properly or not.
@@ -26,45 +28,62 @@ def plot_full_frame_image(full_frame, image_title, collection_type, frames,
     """
     int_time = str(int_time)+' micro secs' # for integ_sweep
     #int_time = str(int_time) # for instensity Sweep
-    title = image_title + ' ('+ collection_type + ' Integration, ' + int_time+')'  
-    #title = image_title + ' ('+ collection_type + ' Intensity, ' + int_time+')'                      
+    title = image_title + ' ('+ collection_type + ' Integration, ' + int_time+')'
+    #title = image_title + ' ('+ collection_type + ' Intensity, ' + int_time+')'
     plt.figure()
-    image = plt.imshow(full_frame, cmap='bwr', interpolation='none', 
-                       origin='lower')
-    cbar = plt.colorbar(image)
+    fig_ax = plt.gca()
+    image = plt.imshow(np.array(full_frame), cmap='nipy_spectral',
+                       origin='lower', interpolation='none')
+    divider = make_axes_locatable(fig_ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(image, cax=cax)
+
     plt.title(title, fontsize=14)
     plt.xlabel('# of spatial pixels', fontsize=12)
     plt.ylabel('# of spectral pixels', fontsize=12)
     plt.grid(False)
-    
+
     plt.savefig(plot_dir+'/'+ collection_type+'_'+\
-                    frames+'.png',dpi=100,bbox_inches="tight")
+                    frames+'.png', dpi=100, bbox_inches="tight")
     plt.close('all')
+
 #******************************************************************************
 
 def  plot_each_quad(quads, image_title, collection_type, frames, plot_dir):
     """
     Makes image of each quad
     """
-    title = image_title + ' ('+ collection_type + ' Integration)'  
+    title = image_title + ' ('+ collection_type + ' Integration)'
     plt.figure()
     plt.grid(False)
-    plt.subplot(221), plt.imshow(quads[3], cmap='gray')
+    plt.subplot(221)
+    plt.imshow(quads[3], cmap='gray')
     plt.colorbar()
-    plt.title('Quad D'), plt.xticks([]), plt.yticks([])
-    plt.subplot(222), plt.imshow(quads[2], cmap='gray')
+    plt.title('Quad D')
+    plt.xticks([])
+    plt.yticks([])
+    plt.subplot(222)
+    plt.imshow(quads[2], cmap='gray')
     plt.colorbar()
-    plt.title('Quad C'), plt.xticks([]), plt.yticks([])
-    plt.subplot(223), plt.imshow(quads[0], cmap='gray')
+    plt.title('Quad C')
+    plt.xticks([])
+    plt.yticks([])
+    plt.subplot(223)
+    plt.imshow(quads[0], cmap='gray')
     plt.colorbar()
-    plt.title('Quad A'), plt.xticks([]), plt.yticks([])
-    plt.subplot(224), plt.imshow(quads[1], cmap='gray')
+    plt.title('Quad A')
+    plt.xticks([])
+    plt.yticks([])
+    plt.subplot(224)
+    plt.imshow(quads[1], cmap='gray')
     plt.colorbar()
-    plt.title('Quad B'), plt.xticks([]), plt.yticks([])
+    plt.title('Quad B')
+    plt.xticks([])
+    plt.yticks([])
     plt.suptitle(title)
     plt.savefig(plot_dir+'/'+ collection_type+'_'+\
-                    frames+'.png',dpi=100,bbox_inches="tight")
-    
+                    frames+'.png', dpi=100, bbox_inches="tight")
+
     plt.close('all')
 #******************************************************************************
 def calculate_std_dev(full_frame):
@@ -126,12 +145,21 @@ def calculate_fft_full_frame(full_frame):
     fft_image = np.fft.fft2(full_frame)
     fshift = np.fft.fftshift(fft_image)
     plt.figure()
-    plt.subplot(131), plt.imshow(np.real(full_frame), cmap='seismic')
-    plt.title('Input Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(132), plt.imshow(20*np.log10(np.abs(fshift)), cmap='seismic')
-    plt.title('Magnitude Spectrum of FFT'), plt.xticks([]), plt.yticks([])
-    plt.subplot(133), plt.imshow(np.angle(fshift), cmap='seismic')
-    plt.title('Phase Spectrum of FFT'), plt.xticks([]), plt.yticks([])
+    plt.subplot(131)
+    plt.imshow(np.real(full_frame), cmap='seismic')
+    plt.title('Input Image')
+    plt.xticks([])
+    plt.yticks([])
+    plt.subplot(132)
+    plt.imshow(20*np.log10(np.abs(fshift)), cmap='seismic')
+    plt.title('Magnitude Spectrum of FFT')
+    plt.xticks([])
+    plt.yticks([])
+    plt.subplot(133)
+    plt.imshow(np.angle(fshift), cmap='seismic')
+    plt.title('Phase Spectrum of FFT')
+    plt.xticks([])
+    plt.yticks([])
     plt.show()
     fig_handle = plt.gcf()
     fig_handle.set_size_inches(10.0, 6.0)
@@ -164,21 +192,22 @@ def calculate_fft_each_quad(quads, nx_quad, ny_quad):
     #fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 12))
     #fig.subplots_adjust(left=0.125, right=0.95, bottom=0.1, top=0.9,
                        # wspace=0.3, hspace=.25)
+    print(nx_quad, ny_quad)
     i = 0
     for quad in quads:
         #ax = axes[int(k / ncols)][int(k % ncols)]
-        quadi = np.asarray(quads[k])
+        quadi = np.asarray(quad[k])
         fft_s = np.fft.fft2(quadi)
-        signal_PSD = np.abs(fft_s)**2
-        freqx = np.fft.fftfreq(signal_PSD.shape[0])
-        freqy = np.fft.fftfreq(signal_PSD.shape[1])
+        signal_psd = np.abs(fft_s)**2
+        freqx = np.fft.fftfreq(signal_psd.shape[0])
+        freqy = np.fft.fftfreq(signal_psd.shape[1])
         i = freqx > 0
         j = freqy > 0
         plt.figure()
-        plt.plot(freqx[i], 20*np.log10(signal_PSD[i]))
+        plt.plot(freqx[i], 20*np.log10(signal_psd[i]))
         plt.show()
         plt.figure()
-        plt.plot(freqy[j], 20*np.log10(signal_PSD[j]))
+        plt.plot(freqy[j], 20*np.log10(signal_psd[j]))
         plt.show()
 
 def moving_average_filter(data, size):
@@ -210,7 +239,7 @@ def random_num_generator(length):
 
 
 #******************************************************************************
-def plot_hist_each_quad(quads, title, collection_type,frames):
+def plot_hist_each_quad(quads, title, collection_type, frames):
     """
     This function calculates the normalized histogram or pdf of each quad with
     bin size of 200. Since the quads contain the overclock bits too, the x-axis
@@ -221,7 +250,7 @@ def plot_hist_each_quad(quads, title, collection_type,frames):
     TO DO : Remove the hard coded values such as plot directory. In future the
     paths will be provided from the main function
     """
-    title = title + ' ('+ collection_type + ' Integration)'      
+    title = title + ' ('+ collection_type + ' Integration)'
     nx_quad = quads.shape[1]
     print(nx_quad)
     ny_quad = quads.shape[2]
@@ -235,52 +264,52 @@ def plot_hist_each_quad(quads, title, collection_type,frames):
     fig.subplots_adjust(left=0.125, right=0.95, bottom=0.1, top=0.9,
                         wspace=0.3, hspace=.25)
     for quad in quads:
-        ax = axes[int(k / ncols)][int(k % ncols)]
+        ax_ = axes[int(k / ncols)][int(k % ncols)]
         #(mean, sigma) = sc.fit(quads[k])
-        mean = np.mean(quads[k])
-        sigma = np.std(quads[k])
-        med = np.median(quads[k])
-        max_val = np.max(quads[k])
-        min_val = np.min(quads[k])
+        mean = np.mean(quad[k])
+        sigma = np.std(quad[k])
+        med = np.median(quad[k])
+        max_val = np.max(quad[k])
+        min_val = np.min(quad[k])
         label = 'Mean = '+ str(round(mean, 1)) + \
                 '\n Median = '+ str(round(med, 2)) + \
                 '\n Std. = '+ str(round(sigma, 1))+ \
                 '\n Max = '+ str(round(max_val, 2)) + \
-                '\n Min = '+ str(round(min_val, 1))                     
+                '\n Min = '+ str(round(min_val, 1))
         sns.set_context("talk")
         with sns.axes_style("darkgrid"):
-            ax.hist(np.reshape(quads[k], (nx_quad*ny_quad, 1)),
-                                200, normed=0, facecolor=color[k], alpha=0.75,
-                                label=label)
+            ax_.hist(np.reshape(quad[k], (nx_quad*ny_quad, 1)),
+                     200, normed=0, facecolor=color[k], alpha=0.75,
+                     label=label)
 
           # Add the best fit line
         #y = mlab.normpdf( bins, mu, sigma)
         #l = ax.plot(bins, y, '--o',color='k',linewidth=0,markersize=0)
-            ax.tick_params(axis='x', pad=10)
-            ax.grid(True, linestyle=':')
-            legend = ax.legend(loc='best', ncol=3, shadow=True,
-                               prop={'size':12}, numpoints=1)
+            ax_.tick_params(axis='x', pad=10)
+            ax_.grid(True, linestyle=':')
+            legend = ax_.legend(loc='best', ncol=3, shadow=True,
+                                prop={'size':12}, numpoints=1)
             legend.get_frame().set_edgecolor('r')
             legend.get_frame().set_linewidth(2.0)
-            ax.set_ylabel('Frequency (# of pixels)', fontsize=15,
-                          fontweight="bold")
+            ax_.set_ylabel('Frequency (# of pixels)', fontsize=15,
+                           fontweight="bold")
             #ax.set_xlim(10000, 14000)
-            ax.set_xlabel('Counts (DNs)', fontsize=14, fontweight="bold")
-            ax.set_title(str(quad_names[k]), fontsize=14, fontweight="bold")
+            ax_.set_xlabel('Counts (DNs)', fontsize=14, fontweight="bold")
+            ax_.set_title(str(quad_names[k]), fontsize=14, fontweight="bold")
             k += 1
     for del_l in range(k, ncols* nrows):
         fig.delaxes(axes[del_l / ncols][del_l % ncols])
     plt.suptitle(title, fontsize=18, fontweight='bold')
     figure_name = r'C:\Users\nmishra\Desktop\test\Quad_based'+'/'+\
                     collection_type+'_'+\
-                    frames+'.png' 
+                    frames+'.png'
     fig.savefig(figure_name, dpi=100)
     plt.close('all')
-    
 
 
-def plot_hist_image(quads, tit, collection_type, frames, 
-                        outlier_filt_data, outlier_dets, int_time,  plot_dir):
+
+def plot_hist_image(quads, tit, collection_type, frames,
+                    outlier_filt_data, outlier_dets, int_time, plot_dir):
     """
     This function calculates the normalized histogram or pdf of each quad with
     bin size of 200. Since the quads contain the overclock bits too, the x-axis
@@ -295,22 +324,22 @@ def plot_hist_image(quads, tit, collection_type, frames,
     int_time = str(int_time)
     title = tit + ' ('+ collection_type + ', Int. time = ' + int_time+')'
     #title = tit + ' ('+ collection_type + ' Intensity, ' + int_time+')' # for intensity sweep
-                    
-    #title = tit + ' ('+ collection_type + ' Integration)'  
-    num_outlier = 'outliers = '+ str((np.array(outlier_dets)).shape[1])   
-            
+
+    #title = tit + ' ('+ collection_type + ' Integration)'
+    num_outlier = 'outliers = '+ str((np.array(outlier_dets)).shape[1])
+
     title1 = tit + ' ('+ collection_type + ', Int. time = ' +int_time+ ', ' +num_outlier+')'
     #title1 = tit + ' ('+ collection_type + ' Intensity' +', ' +num_outlier+')' #for instesity sweep
-                     
+
     nx_quad = quads.shape[0]
     #print(nx_quad)
     ny_quad = quads.shape[1]
    # print(ny_quad)
-   
+
     nrows = 2 # to create 2*2 plot for each quads in each direction
     ncols = 1
-    
-    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 10))
+
+    fig, ax_ = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 10))
     fig.subplots_adjust(left=0.125, right=0.95, bottom=0.1, top=0.9,
                         wspace=0.3, hspace=.25)
 
@@ -324,7 +353,7 @@ def plot_hist_image(quads, tit, collection_type, frames,
             '\n Median = '+ str(round(med, 2)) + \
             '\n Std. = '+ str(round(sigma, 2))+ \
             '\n Max = '+ str(round(max_val, 2)) + \
-            '\n Min = '+ str(round(min_val, 1)) 
+            '\n Min = '+ str(round(min_val, 1))
 
     mean1 = np.mean(outlier_filt_data)
     sigma1 = np.std(outlier_filt_data)
@@ -335,49 +364,49 @@ def plot_hist_image(quads, tit, collection_type, frames,
             '\n Median = '+ str(round(med1, 2)) + \
             '\n Std. = '+ str(round(sigma1, 2))+ \
             '\n Max = '+ str(round(max_val1, 2)) + \
-            '\n Min = '+ str(round(min_val1, 1)) 
+            '\n Min = '+ str(round(min_val1, 1))
 
 
-                    
+
     sns.set_context("talk")
     with sns.axes_style("darkgrid"):
-        
-        ax[0].hist(np.reshape(quads, (nx_quad*ny_quad, 1)),
-                            50, normed=0, facecolor='red', alpha=0.75,
-                            label=label)
 
-        ax[0].tick_params(axis='x', pad=10)
-        ax[0].grid(True, linestyle=':')
-        legend = ax[0].legend(loc='best', ncol=3, shadow=True,
-                           prop={'size':12}, numpoints=1)
+        ax_[0].hist(np.reshape(quads, (nx_quad*ny_quad, 1)),
+                    50, normed=0, facecolor='red', alpha=0.75,
+                    label=label)
+
+        ax_[0].tick_params(axis='x', pad=10)
+        ax_[0].grid(True, linestyle=':')
+        legend = ax_[0].legend(loc='best', ncol=3, shadow=True,
+                               prop={'size':12}, numpoints=1)
         legend.get_frame().set_edgecolor('r')
         legend.get_frame().set_linewidth(2.0)
-        ax[0].set_ylabel('Frequency (# of pixels)', fontsize=15,
-                      fontweight="bold")
+        ax_[0].set_ylabel('Frequency (# of pixels)', fontsize=15,
+                          fontweight="bold")
         #ax.set_xlim(10000, 14000)
-        ax[0].set_xlabel('Counts (DNs)', fontsize=14, fontweight="bold")        
-        ax[0].set_title(title, fontsize=14, fontweight="bold")
-        ax[0].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
-        
+        ax_[0].set_xlabel('Counts (DNs)', fontsize=14, fontweight="bold")
+        ax_[0].set_title(title, fontsize=14, fontweight="bold")
+        ax_[0].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
         # Now for filtered data
-        
-        ax[1].hist(outlier_filt_data,50, normed=0, facecolor='blue', 
-                  label=label1)
 
-        ax[1].tick_params(axis='x', pad=10)
-        ax[1].grid(True, linestyle=':')
-        legend = ax[1].legend(loc='best', ncol=3, shadow=True,
-                           prop={'size':12}, numpoints=1)
+        ax_[1].hist(outlier_filt_data, 50, normed=0, facecolor='blue',
+                    label=label1)
+
+        ax_[1].tick_params(axis='x', pad=10)
+        ax_[1].grid(True, linestyle=':')
+        legend = ax_[1].legend(loc='best', ncol=3, shadow=True,
+                               prop={'size':12}, numpoints=1)
         legend.get_frame().set_edgecolor('r')
         legend.get_frame().set_linewidth(2.0)
-        ax[1].set_ylabel('Frequency (After outliers rejection)',
-                         fontsize=15, fontweight="bold")
+        ax_[1].set_ylabel('Frequency (After outliers rejection)',
+                          fontsize=15, fontweight="bold")
         #ax.set_xlim(10000, 14000)
-        ax[1].set_xlabel('Counts (DNs)', fontsize=14, fontweight="bold")        
-        ax[1].set_title(title1, fontsize=14, fontweight="bold")
-        ax[1].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
-        
+        ax_[1].set_xlabel('Counts (DNs)', fontsize=14, fontweight="bold")
+        ax_[1].set_title(title1, fontsize=14, fontweight="bold")
+        ax_[1].xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+
         figure_name = plot_dir +'/'+collection_type+'_'+\
-                    frames+'.png'  
+                    frames+'.png'
         fig.savefig(figure_name, dpi=100)
         plt.close('all')

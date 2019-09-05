@@ -172,6 +172,47 @@ def plot_smear_signal(smear_signal, title, figure_name):
     plt.close('all')
 
 
+def fill_vignetted_pixels_by_averaging(subset_quad):
+    rows, cols = subset_quad.shape
+    full_rows = 1028
+    x1_rows = list(range(15, rows+15))    
+    new_points_end = list(range(rows+15-1, 1028))   
+    new_points_begin = list(range(0, 16))    
+    y2_all_end = []
+    y2_all_begin = []
+    final_mask = np.zeros((1028, 1024))
+    # ok, let's fill the bottom rows
+    
+    for i in range(0, cols):
+        list1 = subset_quad[0:10, i]
+        for j in range(0, 15):  
+            list1 = np.hstack([np.mean(list1[0:50]), list1])
+        y2_all_begin.append(list1)
+ 
+    y2_all_begin = np.array(y2_all_begin).T
+    y2_all_begin = y2_all_begin[0:15, :]
+    for j in range(0, cols):
+       list2 = subset_quad[:, i]
+       for j in range(0, 38):
+           list2 = np.hstack([list2, np.mean(list2[-150:])])
+       y2_all_end.append(list2)
+    y2_all_end = np.array(y2_all_end).T    
+    final_mask[0:15, :] = y2_all_begin
+    final_mask[15:990, :] = subset_quad
+    final_mask[990:, :] = y2_all_end[-38:, :]
+    print(final_mask.shape)
+    plt.plot(final_mask[1025, :])
+    plt.show()
+    
+    create_image(final_mask, title='a', figure_name='b')
+    return final_mask
+            
+         
+        
+        
+        
+        
+
 
 def interpolate_vignetted_pixels(subset_quad):
     # Let's interpolate forward and backward to fill the vginetted rows
@@ -234,6 +275,7 @@ def create_final_image(full_frame):
     """ Arrange the quads to create the final TEMPO Image
 
     """
+    full_frame = np.array(full_frame)
     quad_a = full_frame[0, :, :]
     quad_b = full_frame[1, :, :]
     quad_c = full_frame[2, :, :]
@@ -256,9 +298,9 @@ def create_image(image_data, title, figure_name):
     cax = divider.append_axes("right", size="5%", pad=0.05)            
     plt.colorbar(image, cax= cax)            
     plt.grid(False)
-#    plt.show()
-#    cc
-    plt.savefig(figure_name,dpi=100,bbox_inches="tight")
+    plt.show()
+    cc
+    #plt.savefig(figure_name,dpi=100,bbox_inches="tight")
     plt.close('all')
   
 def create_hist(PRNU_map, title, figure_name) : 
@@ -384,7 +426,7 @@ def plot_few_PRNU_vals(PRNU_map, figure_name, title):
     plt.legend(loc='best')
     plt.title(title)
     plt.ylabel('PRNU Value (Ratio)')
-    plt.ylim([0.90, 1.05])
+    plt.ylim([0.85, 1.1])
     plt.xlabel('Pixel Indices (#)')
     #plt.show()    
     plt.savefig(figure_name, dpi=100, bbox_inches="tight")
@@ -402,7 +444,7 @@ def plot_few_PRNU_vals_spatial(PRNU_map, figure_name, title):
     plt.legend(loc='best')
     plt.title(title)
     plt.ylabel('PRNU Value (Ratio)')
-    plt.ylim([0.90, 1.05])
+    plt.ylim([0.85, 1.1])
     plt.xlabel('Pixel Indices (#)')       
     plt.savefig(figure_name, dpi=100, bbox_inches="tight") 
     #plt.show() 
@@ -441,9 +483,12 @@ def main():
     #print(nominal_int_files)
 
     save_dir = r'C:\Users\nmishra\Workspace\TEMPO\PRNU_map\PRNU_Analysis_5th_order_full_frame'
+    all_PRNU_map = [ ]
+    
     for data_files in nominal_int_files:
-        all_PRNU_map = [ ]
         all_quads = [ ]
+        print (data_files)
+       
         for i in range(0, 4): # for the 4 quads
          
             data_path_name_split = data_files.split('_')  
@@ -468,17 +513,21 @@ def main():
             quad_A = np.mean(quad[:,:,:], axis=0)                
             tsoc_A = np.mean(quad[:, 4:1028, 1034:1056], axis=0)
             
-            create_image(quad_A[4:1028, 10:1034], title='check', figure_name='check')                             
+            
+           # create_image(quad_A[4:1028, 10:1034], title='check', figure_name='check')                             
             active_quad_A = perform_bias_subtraction_ave(quad_A[4:1028, 10:1034], tsoc_A)
              # removed the vignetted zones and perform linearity
             linearized_quad_A = perform_linearity(active_quad_A[15:990, :], quads[i]) 
+            
             print(linearized_quad_A.shape)
             
             active_quad_A, smear_signal = perform_smear_subtraction(linearized_quad_A, int_time)
             dark_current = calculate_dark_current(data_files, i, int_time)
             active_quad_A = active_quad_A - dark_current                 
             # Ok, let's interpolate all the pixels to fullframe
-            active_quad_A = interpolate_vignetted_pixels(active_quad_A)
+            #active_quad_A = interpolate_vignetted_pixels(active_quad_A)
+            active_quad_A = fill_vignetted_pixels_by_averaging(active_quad_A)
+            cc
             all_quads.append(active_quad_A)
             
            #*******************************************************************************************
@@ -544,39 +593,39 @@ def main():
         title = 'Histogram of PRNU Map, ' + string2 + str(int_time)+ r" $\mu$" +'secs'
         create_hist(PRNU_map, title, figure_name)
         all_PRNU_map.append(PRNU_map)
-        cc
+        
            
             # Ok, take average of all the PRNU maps and compute a final mask
         
     final_PRNU = np.mean(np.array(all_PRNU_map), axis=0)
     final_PRNU_std = np.std(np.array(all_PRNU_map), axis=0)
 
-    PRNU_ave_dir = 'Final_PRNU/Full_quad_PRNU'  
-    quad_dir = quads[i]
-    final_image_dir = os.path.join(save_dir, quad_dir, PRNU_ave_dir)
+    PRNU_ave_dir = 'Final_PRNU/Full_quad_PRNU' 
+   
+    final_image_dir = os.path.join(save_dir,  PRNU_ave_dir)
     if not os.path.exists(final_image_dir):
         os.makedirs(final_image_dir) 
     
-    title = 'Average PRNU Map, ' + quads[i]
+    title = 'Average PRNU Map '
     figure_name = final_image_dir+'/'+ 'final_mask_image'+'.png'
     create_image(final_PRNU, title, figure_name) 
     
-    title = ' Uncertainty associated with average PRNU Map, '+ quads[i]
+    title = ' Uncertainty associated with average PRNU Map '
     figure_name = final_image_dir+'/'+ 'unct_final_mask_image'+'.png'
     create_image(100* final_PRNU_std/final_PRNU, title, figure_name)
     
-    title = ' Histogram of Average PRNU Map, '+ quads[i]
+    title = ' Histogram of Average PRNU Map '
     figure_name = final_image_dir+'/'+ 'final_mask_hist'+'.png' 
     create_hist(final_PRNU, title, figure_name)
     
-    title = ' Histogram of Uncertainty associated with final PRNU Map, '+ quads[i]
+    title = ' Histogram of Uncertainty associated with final PRNU Map '
     figure_name = final_image_dir+'/'+ 'unct_final_mask_hist'+'.png' 
     #create_hist(100* final_PRNU_std/final_PRNU, title, figure_name)
     
-    csv_file_name = final_image_dir+'/'+ quads[i]+'_Final_PRNU.csv'
+    csv_file_name = final_image_dir+'/'+'Final_PRNU.csv'
     np.savetxt(csv_file_name, np.array(final_PRNU), delimiter=",")
     
-    csv_file_name = final_image_dir+'/'+ quads[i]+'_Final_PRNU_Std.csv'
+    csv_file_name = final_image_dir+'/'+'Final_PRNU_Std.csv'
     np.savetxt(csv_file_name, np.array(final_PRNU_std), delimiter=",")
         
 if __name__ == "__main__":

@@ -114,7 +114,7 @@ def perform_smear_subtraction(active_quad, int_time):
     #in the storage region is really small and hence neglected from the analysis.
     #typically, Csmear = tFT / (ti+ tFT) * (AVG[C(w)] - DCStor * tRO
     # tft = 8ms
-    tFT = 8*10**(3)
+    tFT = 8.3333*10**(3)
     ti = int_time
     smear_factor = (tFT / (ti+ tFT))* np.mean(active_quad, axis=0)
     #print(smear_factor.shape)
@@ -238,8 +238,8 @@ def main():
         
         all_int_files = [each for each in os.listdir(saved_data_files) \
                          if each.endswith('dat.sav')] 
-        all_dark_files = [each for each in os.listdir(saved_dark_files) \
-                          if each.endswith('dat.sav')] 
+        # all_dark_files = [each for each in os.listdir(saved_dark_files) \
+                          # if each.endswith('dat.sav')] 
        
         for data_files in all_int_files:
             data_file = os.path.join(saved_data_files, data_files) 
@@ -262,12 +262,11 @@ def main():
                 tsoc = avg_quad[4:1028, 1034:1056]               
                 
                 #------perform bias subtraction using trailing overclocks and save the dark current image----------
-                bias_subtracted_quad = perform_bias_subtraction_ave(active_quad, tsoc) 
+                #bias_subtracted_quad = perform_bias_subtraction_ave(active_quad, tsoc) 
                 # mask out the outliers
                
-                mask_array = np.ma.masked_array(bias_subtracted_quad, mask = outlier_mask[i])
-                smear_subtracted_quad = perform_smear_subtraction(mask_array, int_time)
-                cross_talk_array = smear_subtracted_quad
+                
+                cross_talk_array = avg_quad
                 nx1, ny1 = cross_talk_array.shape
                 # let's reshape the array to 1-D so we can work with single loop
                 #cross_talk_array = np.reshape(cross_talk_array, (nx1*ny1, 1))
@@ -295,9 +294,8 @@ def main():
                         
                    
                     # subtract off the dark current
-                    dark_current_removed_quad = perform_Dark_removal(dark_data_file, i)
-                    dark_current_smear_removed = perform_smear_subtraction(dark_current_removed_quad, int_time)
-                    cross_talk_array = cross_talk_array - dark_current_smear_removed
+                    
+                    cross_talk_array = cross_talk_array 
                     row_average = np.mean(cross_talk_array, axis=1)                
                     column_average = np.mean(cross_talk_array, axis=0)
                     

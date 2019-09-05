@@ -49,7 +49,7 @@ def perform_smear_subtraction(active_quad, int_time):
     #in the storage region is really small and hence neglected from the analysis.
     #typically, Csmear = tFT / (ti+ tFT) * (AVG[C(w)] - DCStor * tRO
     # tft = 8ms
-    tFT = 8*10**(3)
+    tFT = 8.33*10**(3)
     ti = int_time
     smear_factor = (tFT / (ti+ tFT))* np.mean(active_quad, axis=0)
     #print(smear_factor.shape)
@@ -122,12 +122,12 @@ def perform_bias_subtraction(active_quad, trailing_overclocks):
     # sepearate out even and odd detectors
     ndims, nx_quad, ny_quad = active_quad.shape
     bias_subtracted_quad = np.array([[[0]*ndims]*ny_quad]*nx_quad)
-    even_detector_bias = trailing_overclocks[:, :, ::2]
-    avg_bias_even = np.mean(even_detector_bias, axis=2)
-    odd_detector_bias = trailing_overclocks[:, :, 1::2]
+    odd_detector_bias = trailing_overclocks[:, :, ::2]
     avg_bias_odd = np.mean(odd_detector_bias, axis=2)
-    even_detector_active_quad = active_quad[:, :, ::2]
-    odd_detector_active_quad = active_quad[:, :, 1::2]
+    even_detector_bias = trailing_overclocks[:, :, 1::2]
+    avg_bias_even = np.mean(even_detector_bias, axis=2)
+    odd_detector_active_quad = active_quad[:, :, ::2]
+    even_detector_active_quad = active_quad[:, :, 1::2]
     bias_subtracted_quad_even = even_detector_active_quad - avg_bias_even[:, :, None]
     bias_subtracted_quad_odd = odd_detector_active_quad - avg_bias_odd[:, :, None]
     bias_subtracted_quad = np.reshape(bias_subtracted_quad, (ndims, ny_quad, nx_quad))
@@ -184,8 +184,8 @@ def main():
 
 
 
-    file_path1 = r'F:\TEMPO\Data\GroundTest\FPS\Bar_target\Integration_Sweep'
-    save_dir = r'C:\Users\nmishra\Workspace\TEMPO\Data\GroundTest\FPS\Signal_dependent_offset\Bar_Target_Data'
+    file_path1 = r'F:\TEMPO\Data\GroundTest\FPS\Integration_Sweep\Light\Saved_quads'
+    save_dir = os.path.join(file_path1,'Signal_dependent_offset')
     all_int_files = [each for each in os.listdir(file_path1) \
                          if each.endswith('.dat.sav')]
     if 'Integration_Sweep' in file_path1:
@@ -255,14 +255,21 @@ def main():
             all_full_frame = IDL_variable.q
             quads = ['Quad A', 'Quad B', 'Quad C', 'Quad D']
             all_full_frame = IDL_variable.q
-            quad = all_full_frame[:, i, :, :]
-            tsoc_all = quad[:, 4:1028, 1034:1056]
-            active_quad = np.mean(quad[:, 4:1028, 10:1034], axis=0)
+            
+            quad = np.mean(all_full_frame[:, i, :, :], axis=0)
+            #print(quad.shape)
+           
+            tsoc_all = quad[ 2:1030, 1034:1056]
+            active_quad = quad[2:1030, 10:1034]
             #active_quad, smear = perform_smear_subtraction(active_quad, int_time)
-            active_quad[active_quad==16383] = 'nan'
-            active_quad_even = active_quad[:, ::2]            
-            active_quad_even = np.nanmean(active_quad_even, axis=1)            
-            active_quad_odd = np.nanmean((active_quad[:, 1::2]), axis=1)
+            #active_quad[active_quad==16383] = 'nan'
+            active_quad_odd = active_quad[:, ::2]
+            active_quad_even = active_quad[:, 1::2]              
+            active_quad_odd = np.nanmean(active_quad_odd, axis=1) 
+            active_quad_even = np.nanmean(active_quad_even, axis=1)
+            
+           
+            
             #active_quad_even_outlier_filt = np.mean((active_quad[:, ::2]), axis=1)
             #active_quad_odd_outlier_filt = np.mean((active_quad[:, 1::2]), axis=1)
             active_quad_even_all.append(active_quad_even)
@@ -282,11 +289,24 @@ def main():
 
             # separate out even and odd lines
 
-            even_samples_all = tsoc_all[:, :, ::2]
-            odd_samples_all = tsoc_all[:, :, 1::2]
-
-            even_samples_avg = np.mean(even_samples_all, axis=0)
-            odd_samples_avg = np.mean(odd_samples_all, axis=0)
+            odd_samples_all = tsoc_all[:, ::2]
+            odd_samples_all = odd_samples_all[:, 4:]
+#            print(np.mean(odd_samples_all))
+#            print(odd_samples_all.shape)
+            
+            even_samples_all = tsoc_all[:, 1::2]
+            even_samples_all = even_samples_all[:, 4:]
+            even_samples_all = even_samples_all[:,:-1]
+#            print(np.mean(even_samples_all))
+#            print(even_samples_all.shape)
+#            cc
+            plt.plot(active_quad_even, even_samples_all,'b.')
+            plt.show()
+            even_samples_avg = np.nanmean(even_samples_all, axis=1)
+            odd_samples_avg = np.nanmean(odd_samples_all, axis=1)
+            
+            tsoc_even_all.append(even_samples_avg)
+            tsoc_odd_all.append(odd_samples_avg)
 
 #            tsoc_even_all.append(np.mean((even_samples_avg)))
 #            tsoc_even_all_outlier_filt.append(np.mean(filter_outlier_median(even_samples_avg)))
@@ -295,45 +315,44 @@ def main():
 
 
 
-            title = 'Histogram of Serial Overclocks (All 100 Frames)\n '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
-            figure_name = save_dir_image + '/'+ string1 + str(int_time) + '_image.png'
-            plot_hist(even_samples_all, odd_samples_all, title, figure_name)
-
-            avg_frames_hist = 'avg_frames_hist'
-            save_dir_image = os.path.join(save_dir, quad_dir, avg_frames_hist)
-            if not os.path.exists(save_dir_image):
-               os.makedirs(save_dir_image)
-            title = 'Histogram of Serial Overclocks (Avg. of 100 Frames)\n '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
-            figure_name = save_dir_image + '/'+ string1 + str(int_time) + '_image.png'
-            plot_hist(even_samples_avg, odd_samples_avg,  title, figure_name)
-
-
-            final_two_lines = 'final_two_lines'
-            save_dir_image = os.path.join(save_dir, quad_dir, final_two_lines)
-            if not os.path.exists(save_dir_image):
-                 os.makedirs(save_dir_image)
+#            title = 'Histogram of Serial Overclocks (All 100 Frames)\n '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
+#            figure_name = save_dir_image + '/'+ string1 + str(int_time) + '_image.png'
+#            plot_hist(even_samples_all, odd_samples_all, title, figure_name)
+#
+#            avg_frames_hist = 'avg_frames_hist'
+#            save_dir_image = os.path.join(save_dir, quad_dir, avg_frames_hist)
+#            if not os.path.exists(save_dir_image):
+#               os.makedirs(save_dir_image)
+#            title = 'Histogram of Serial Overclocks (Avg. of 100 Frames)\n '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
+#            figure_name = save_dir_image + '/'+ string1 + str(int_time) + '_image.png'
+#            plot_hist(even_samples_avg, odd_samples_avg,  title, figure_name)
+#
+#
+#            final_two_lines = 'final_two_lines'
+#            save_dir_image = os.path.join(save_dir, quad_dir, final_two_lines)
+#            if not os.path.exists(save_dir_image):
+#                 os.makedirs(save_dir_image)
+#            
+#            even_samples_used = np.mean(even_samples_avg, axis=1)
+#            unct_spectral_even.append(np.std(even_samples_used)/np.mean(even_samples_used))
+#           
+#            odd_samples_used = np.mean(odd_samples_avg, axis=1)
+#            unct_spectral_odd.append(np.std(odd_samples_used)/np.mean(odd_samples_used))
+#
+#            title = 'Histogram of Serial Overclocks (Avg  for even and odd lines)\n '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
+#            figure_name = save_dir_image + '/'+ string1 + str(int_time) + '_image.png'
+#            #plot_hist(even_samples_used, odd_samples_used,  title, figure_name)
+#
+#
+#            tsoc_profile = 'tsoc_plot_outlier_filtered'
+#            save_tsoc_profile = os.path.join(save_dir, quad_dir, tsoc_profile)
+#            if not os.path.exists(save_tsoc_profile):
+#                 os.makedirs(save_tsoc_profile)
+#            figure_name = save_tsoc_profile + '/'+ string1 + str(int_time) + '_image.png'
+#            title = 'Profile of Serial Overclocks '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
+#            even_samples_mean, odd_samples_mean = plot_few_tsocs(even_samples_avg, odd_samples_avg, figure_name, title)
+#            # save average in spatial direction
             
-            even_samples_used = np.mean(even_samples_avg, axis=1)
-            unct_spectral_even.append(np.std(even_samples_used)/np.mean(even_samples_used))
-           
-            odd_samples_used = np.mean(odd_samples_avg, axis=1)
-            unct_spectral_odd.append(np.std(odd_samples_used)/np.mean(odd_samples_used))
-
-            title = 'Histogram of Serial Overclocks (Avg  for even and odd lines)\n '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
-            figure_name = save_dir_image + '/'+ string1 + str(int_time) + '_image.png'
-            #plot_hist(even_samples_used, odd_samples_used,  title, figure_name)
-
-
-            tsoc_profile = 'tsoc_plot_outlier_filtered'
-            save_tsoc_profile = os.path.join(save_dir, quad_dir, tsoc_profile)
-            if not os.path.exists(save_tsoc_profile):
-                 os.makedirs(save_tsoc_profile)
-            figure_name = save_tsoc_profile + '/'+ string1 + str(int_time) + '_image.png'
-            title = 'Profile of Serial Overclocks '+ quads[i]+', ' + string2 + str(int_time)#+ r" $\mu$" +'secs'
-            even_samples_mean, odd_samples_mean = plot_few_tsocs(even_samples_avg, odd_samples_avg, figure_name, title)
-            # save average in spatial direction
-            tsoc_even_all.append(even_samples_mean)
-            tsoc_odd_all.append(odd_samples_mean)
             
 
 
@@ -385,7 +404,8 @@ def main():
 #        print(tsoc_even_all_outlier_filt)
 #        print(tsoc_odd_all_outlier_filt)
 #
-        #dframe1 = pd.DataFrame(
+
+#        dframe1 = pd.DataFrame(
 #                  {'Avg_Active_Quad_even' : active_quad_even_all,
 #                   'Avg_Active_Quad_odd' : active_quad_odd_all,
 #                   'Avg_tsoc_Quad_even' : tsoc_even_all,
@@ -403,16 +423,20 @@ def main():
 #                   'Unct_tsoc_Quad_even' : unct_spectral_even,
 #                   'Unct_tsoc_Quad_odd': unct_spectral_odd
 #                    })
-        data_to_be_saved = np.concatenate((active_quad_even_all,active_quad_odd_all,tsoc_even_all,tsoc_odd_all), axis=0)
+        data_to_be_saved = np.concatenate((active_quad_even_all, active_quad_odd_all, 
+                                           tsoc_even_all, tsoc_odd_all), axis=0)
+        #print()
         csv_save_dir = os.path.join(save_dir, quad_dir)
         if not os.path.exists( csv_save_dir):
                os.makedirs( csv_save_dir)
-        csv_file_name1 = csv_save_dir +'/'+ quads[i]+'_Signal_dependent_offset_more_outliers.csv'
+        csv_file_name1 = csv_save_dir +'/'+ quads[i]+'_Signal_dependent_offset_dark_data.csv'
+#        csv_file_name2 = csv_save_dir +'/'+ quads[i]+'_NM_Signal_dependent_offset_dark_data.csv'
+
         np.savetxt(csv_file_name1, np.array(data_to_be_saved).T, delimiter=',', fmt='%1.2f')
         #csv_file_name2 = quads[i]+'_Signal_dependent_offset_outlier_filt.csv'
         #csv_file_name3 = quads[i]+'_Signal_dependent_offset_unct.csv'
-        #dframe1.to_csv(csv_save_dir+'/'+csv_file_name1)
-        #dframe2.to_csv(csv_save_dir+'/'+csv_file_name2) 
+        #np.savetxt(csv_file_name2, np.array(active_quad_even_all).T, delimiter=',', fmt='%1.2f')
+        #dframe2.to_csv(csv_save_dir+'/'+csv_file_name2), 
         #dframe3.to_csv(csv_save_dir+'/'+csv_file_name3)
         #cc
 if __name__ == "__main__":

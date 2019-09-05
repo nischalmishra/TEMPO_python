@@ -93,10 +93,7 @@ def main():
         active_quad_D = quad_D_all_frame[:, 4:1028, 10:1034] 
         bias_val_D = quad_D_all_frame[:, 4:1028, 1034:1056]
         avg_bias_D = np.mean(bias_val_D, axis=2)
-        bias_subtracted_quad_D = active_quad_D - avg_bias_D[:,:, None]    
-        
-             
-        
+        bias_subtracted_quad_D = active_quad_D - avg_bias_D[:,:, None]         
         # let us plot the histogram of the variance of each of the active pixels
         label1 = str(quads[i])
         variance_all_active_pixels = np.var(bias_subtracted_quad_D, axis=0)

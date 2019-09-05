@@ -233,12 +233,14 @@ def plot_smear_signal_correction_comp(active_quad,active_quad_corr, title, figur
 def create_image(image_data, title, figure_name):
     plt.figure()
     ax = plt.gca()
-    image = ax.imshow(image_data, cmap='bwr', origin='lower')
+    image = ax.imshow(image_data, cmap='nipy_spectral', origin='lower')
     plt.title(title)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)            
     plt.colorbar(image, cax= cax)            
-    plt.grid(False)    
+    plt.grid(False)
+    plt.show()
+    cc    
     
     #plt.savefig(figure_name,dpi=95,bbox_inches="tight")
     #plt.show()
@@ -288,10 +290,10 @@ def main():
     #ny_quad = 1046 # For Tempo
     #nlat = nx_quad*2
     #nspec = ny_quad*2
-    file_path1 = r'C:\Users\nmishra\Workspace\TEMPO\Data\GroundTest\FPS\Integration_Sweep\Dark\saved_quads'
+    file_path1 = r'F:\TEMPO\Data\GroundTest\FPS\Integration_Sweep\Dark'
     if 'Integration_Sweep' in file_path1:
     #if 'Bar_target' in file_path1:
-        saturated_collects = [ 'FT6_LONG_INT_130018.dat.sav','FT6_SHORT_INT_0.dat.sav',
+        saturated_collects = [ 'FT6_LONG_INT_130018.dat.sav',#'FT6_SHORT_INT_0.dat.sav',
                               'FT6_LONG_INT_134990.dat.sav',
                               'FT6_LONG_INT_139961.dat.sav', 'FT6_LONG_INT_145028.dat.sav',
                               'FT6_LONG_INT_149999.dat.sav', 'FT6_LONG_INT_154970.dat.sav',
@@ -304,12 +306,7 @@ def main():
     all_int_files = [each for each in os.listdir(file_path1) \
                      if each.endswith('.dat.sav')]
    
-    all_int_files_subset = ['SPI_20160913163541215_BAR-TARGET_INTSWEEP_LIGHT-BOX_FT6_OP_INT_118000.dat.sav',
-                            'SPI_20160913163633794_BAR-TARGET_INTSWEEP_LIGHT-BOX_FT6_SHORT_INT_4971.dat.sav',
-                            'SPI_20160913164334263_BAR-TARGET_INTSWEEP_LIGHT-BOX_FT6_SHORT_INT_60038.dat.sav',
-                            'SPI_20160913164917241_BAR-TARGET_INTSWEEP_LIGHT-BOX_FT6_NOM_INT_99999.dat.sav',
-                            'SPI_20160913165200488_BAR-TARGET_INTSWEEP_LIGHT-BOX_FT6_LONG_INT_125047.dat.sav']
-
+  
    
     nominal_int_files = [items for items in all_int_files
                          if not items.endswith(tuple(saturated_collects))
@@ -319,7 +316,7 @@ def main():
     PRNU_directory = r'C:\Users\nmishra\Workspace\TEMPO\Data\GroundTest\FPS\Integration_Sweep\Light\saved_quads\PRNU_quads'
     
     for i in range(0, 4): # for the 4 quads
-        i=1
+        i=0
         column_average_all = [ ]
         column_average_all_overclock = []
         smear_signal_all = [ ]
@@ -330,8 +327,7 @@ def main():
         diff_image_std = [ ]
         int_time_all = [ ]
         smear_signal_all = [ ]        
-        for data_files in nominal_int_files:
-            print(data_files)
+        for data_files in nominal_int_files[1:]:
             data_path_name_split = data_files.split('_')
             data_file = os.path.join(file_path1, data_files)
             IDL_variable = readsav(data_file)
@@ -370,6 +366,7 @@ def main():
         
             #------perform bias subtraction using trailing overclocks----------
             active_quad_A = perform_bias_subtraction_ave(quad_A[4:1028, 10:1034], tsoc_A)
+            
             
             # perform non-lineairty correction using look up table
             linearized_quad_A = perform_linearity(active_quad_A, quads[i])
